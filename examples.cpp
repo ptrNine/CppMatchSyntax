@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 #include "match_syntax.hpp"
 
 void match_distances() {
@@ -90,11 +91,49 @@ void template_match() {
         std::cout << "It's worked!" << std::endl;
 }
 
+
+void lazify_example() {
+    static std::string state;
+
+    class ExpensiveConstructor {
+    public:
+        ExpensiveConstructor(int) {
+            state += "EXPENSIVE ";
+        }
+    };
+
+    auto rc = match("operation3") {
+        equal("operation1") = ExpensiveConstructor(1),
+        equal("operation2") = ExpensiveConstructor(2),
+        equal("operation3") = ExpensiveConstructor(3)
+    };
+
+    // All constructors have been called :/
+    assert(state == "EXPENSIVE EXPENSIVE EXPENSIVE ");
+
+    // Fix that with "lazy"
+    state = "";
+
+    rc = match("operation3") {
+            equal("operation1") = lazy(ExpensiveConstructor(1)),
+            equal("operation2") = lazy(ExpensiveConstructor(2)),
+            equal("operation3") = lazy(ExpensiveConstructor(3))
+    };
+
+    // Only one constructor has been called
+    assert(state == "EXPENSIVE ");
+}
+
+
 int main() {
+    match(3) {
+        no_opt = 3
+    };
+
     //match_distances();
     //calculator();
     template_match();
-
+    lazify_example();
 
     return 0;
 }

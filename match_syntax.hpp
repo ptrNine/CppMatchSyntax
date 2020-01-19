@@ -12,6 +12,9 @@
 #endif
 
 namespace {
+    template <typename T>
+    inline constexpr bool is_number_v = !std::is_same_v<T, char> && (std::is_integral_v<T> || std::is_floating_point_v<T>);
+
 #ifdef MATCH_SYNTAX_USE_SCL
     #define STR_EQUAL_ITER(TYPE) \
     if (str2.type() == typeid(TYPE)) \
@@ -20,7 +23,6 @@ namespace {
     #define DECLARE_BOOL_TRAIT_ALIAS(name) \
     template<typename T> inline constexpr bool name = scl::name<T>
 
-    DECLARE_BOOL_TRAIT_ALIAS(is_number_v);
     DECLARE_BOOL_TRAIT_ALIAS(is_function_v);
     DECLARE_BOOL_TRAIT_ALIAS(is_c_string_v);
     DECLARE_BOOL_TRAIT_ALIAS(is_any_string_v);
@@ -46,14 +48,11 @@ namespace {
 
     #undef DECLARE_BOOL_ALIAS
 #else
-#define STR_EQUAL_ITER(TYPE) \
+    #define STR_EQUAL_ITER(TYPE) \
     if (str2.type() == typeid(TYPE)) \
         return std::string(str1) == std::any_cast<TYPE>(str2)
 
-#define SICB static inline constexpr bool
-
-    template <typename T>
-    inline constexpr bool is_number_v = std::is_integral_v<T> || std::is_floating_point_v<T>;
+    #define SICB static inline constexpr bool
 
     template <typename T>
     struct is_c_string { SICB value = false; };
@@ -121,7 +120,7 @@ namespace {
         return str_any_equal(std::string(str1), str2);
     }
 
-#undef SICB
+    #undef SICB
 #endif
 }
 
@@ -327,18 +326,76 @@ inline auto MatchDefine(T&& value) {
         return MatchDef(std::forward<T>(value));
 }
 
+/**
+ * Define match expression (same as 'switch')
+ * @param VAL - value to be matched
+ */
 #define match(VAL)  MatchDefine(VAL) * std::array
+
+/**
+ * Default case (same as 'default')
+ */
 #define no_opt MatchCondition::Default()
 
+/**
+ * Match if value is equal with VAL
+ */
 #define equal(VAL) MatchCondition::Equal(VAL)
+
+/**
+ * Match if value is greater than VAL
+ */
 #define greater(VAL) MatchCondition::Greater(VAL)
+
+/**
+ * Match if value is less than VAL
+ */
 #define less(VAL) MatchCondition::Less(VAL)
+
+/**
+ * Match if value is equal to or greater than VAL
+ */
 #define greater_eq(VAL) MatchCondition::GreaterEq(VAL)
+
+/**
+ * Match if value is equal to or less than VAL
+ */
 #define less_eq(VAL) MatchCondition::LessEq(VAL)
+
+/**
+ * Match if value is in range from LOW to HIGH (not inclusive)
+ */
 #define in_range(LOW, HIGH) MatchCondition::InRange(LOW, HIGH)
+
+/**
+ * Match if test callback FUNCTION return true
+ * @param FUNCTION - callback with type bool(const T&) when T is type of value to be matched
+ */
 #define mtest(FUNCTION) MatchCondition::Test(std::function{FUNCTION})
+
+/**
+ * Match if one of arguments is equal
+ */
 #define any_of(...) MatchCondition::AnyOf(__VA_ARGS__)
 
+/**
+ * Do operation
+ *
+ * Use after branch condition, for example:
+ * equal(5) = doo { std::cout << "it's five" }
+ */
 #define doo [&]()
+
+/**
+ * Inner match
+ *
+ * Use in inner match expressions
+ *
+ * match(5) { equal(5) = in_match(6, { equal(6) = true }) }
+ */
 #define in_match(VAL, ...) doo { return match(VAL) __VA_ARGS__ ; }
+
+/**
+ * Use for "lazify" operations
+ */
 #define lazy(...) doo { return __VA_ARGS__; }
