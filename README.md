@@ -1,5 +1,10 @@
-# CppMatchSyntax
+CppMatchSyntax
+==============
+
+[![Build Status](https://travis-ci.com/ptrNine/CppMatchSyntax.svg?branch=master)](https://travis-ci.com/ptrNine/CppMatchSyntax)
+
 Pattern match syntax for C++
+
 
 A little bit more than switch.
 You can do this:
