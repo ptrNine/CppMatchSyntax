@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.10)
 project(CppMatchSyntax)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(examples examples.cpp)
+if (BUILD_EXAMPLES)
+    add_executable(examples examples.cpp)
+endif()
 
-if (ENABLE_TESTS)
+if (BUILD_TESTS)
     add_executable(Tests tests.cpp)
-endif ()
+endif()
