@@ -321,7 +321,7 @@ private:
 template <typename T>
 inline auto MatchDefine(T&& value) {
     if constexpr (is_c_string_v<T>)
-        return MatchDef<std::decay_t<T>>(std::forward<T>(value));
+        return MatchDef<std::decay_t<T>>(value);
     else
         return MatchDef(std::forward<T>(value));
 }
@@ -330,53 +330,53 @@ inline auto MatchDefine(T&& value) {
  * Define match expression (same as 'switch')
  * @param VAL - value to be matched
  */
-#define match(VAL)  MatchDefine(VAL) * std::array
+#define match(VAL) MatchDefine(VAL) * std::array
 
 /**
  * Default case (same as 'default')
  */
-#define no_opt MatchCondition::Default()
+#define noopt MatchCondition::Default()
 
 /**
  * Match if value is equal with VAL
  */
-#define equal(VAL) MatchCondition::Equal(VAL)
+#define eql(VAL) MatchCondition::Equal(VAL)
 
 /**
  * Match if value is greater than VAL
  */
-#define greater(VAL) MatchCondition::Greater(VAL)
+#define grt(VAL) MatchCondition::Greater(VAL)
 
 /**
  * Match if value is less than VAL
  */
-#define less(VAL) MatchCondition::Less(VAL)
+#define les(VAL) MatchCondition::Less(VAL)
 
 /**
  * Match if value is equal to or greater than VAL
  */
-#define greater_eq(VAL) MatchCondition::GreaterEq(VAL)
+#define geql(VAL) MatchCondition::GreaterEq(VAL)
 
 /**
  * Match if value is equal to or less than VAL
  */
-#define less_eq(VAL) MatchCondition::LessEq(VAL)
+#define leql(VAL) MatchCondition::LessEq(VAL)
 
 /**
  * Match if value is in range from LOW to HIGH (not inclusive)
  */
-#define in_range(LOW, HIGH) MatchCondition::InRange(LOW, HIGH)
+#define inran(LOW, HIGH) MatchCondition::InRange(LOW, HIGH)
 
 /**
  * Match if test callback FUNCTION return true
  * @param FUNCTION - callback with type bool(const T&) when T is type of value to be matched
  */
-#define mtest(FUNCTION) MatchCondition::Test(std::function{FUNCTION})
+#define mstest(FUNCTION) MatchCondition::Test(std::function{FUNCTION})
 
 /**
  * Match if one of arguments is equal
  */
-#define any_of(...) MatchCondition::AnyOf(__VA_ARGS__)
+#define anyof(...) MatchCondition::AnyOf(__VA_ARGS__)
 
 /**
  * Do operation

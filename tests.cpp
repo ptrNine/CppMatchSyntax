@@ -6,82 +6,82 @@ using namespace std::literals;
 int main() {
     SECTION("Numbers") {
         REQUIRE("one hundred forty four"s == match(144) {
-            equal(7)   = "seven",
-            equal(14)  = "fourteen",
-            equal(100) = "one hundred",
-            equal(144) = "one hundred forty four",
-            equal(228) = "two hundred twenty two"
+            eql(7)   = "seven",
+            eql(14)  = "fourteen",
+            eql(100) = "one hundred",
+            eql(144) = "one hundred forty four",
+            eql(228) = "two hundred twenty two"
         });
 
         REQUIRE("greater 0.5"s == match(0.55) {
-            greater(0.9) = "greater 0.9",
-            greater(0.8) = "greater 0.8",
-            greater(0.6) = "greater 0.6",
-            greater(0.5) = "greater 0.5",
-            greater(0.3) = "greater 0.3"
+            grt(0.9) = "greater 0.9",
+            grt(0.8) = "greater 0.8",
+            grt(0.6) = "greater 0.6",
+            grt(0.5) = "greater 0.5",
+            grt(0.3) = "greater 0.3"
         });
 
         REQUIRE("less 0.4" == match(0.333) {
-            less(0.3)   = "less 0.3",
-            less(0.333) = "less 0.333",
-            less(0.4)   = "less 0.4"
+            les(0.3)   = "less 0.3",
+            les(0.333) = "less 0.333",
+            les(0.4)   = "less 0.4"
         });
 
         REQUIRE("less_eq 10" == match(10) {
-            less(5)       = "less 5",
-            less_eq(10.0) = "less_eq 10"
+            les(5)     = "less 5",
+            leql(10.0) = "less_eq 10"
         });
 
         REQUIRE("greater_eq 15" == match(15.0) {
-            greater_eq(16.9) = "greater_eq 16.9",
-            greater_eq(15)   = "greater_eq 15"
+            geql(16.9) = "greater_eq 16.9",
+            geql(15)   = "greater_eq 15"
         });
 
         REQUIRE("no_opt" == match(10) {
-            equal(5)       = "equal 5",
-            greater_eq(20) = "greater_eq 20",
-            no_opt         = "no_opt"
+            eql(5)   = "equal 5",
+            geql(20) = "greater_eq 20",
+            noopt    = "no_opt"
         });
 
         REQUIRE("in_range 22.55 100" == match(22.55) {
-            in_range(4, 6)        = "in_range 4 6",
-            in_range(20.5, 22.55) = "in_range 20.5 22.55",
-            in_range(22.55, 100)  = "in_range 22.55 100"
+            inran(4, 6)        = "in_range 4 6",
+            inran(20.5, 22.55) = "in_range 20.5 22.55",
+            inran(22.55, 100)  = "in_range 22.55 100"
         });
     }
 
     SECTION("Strings") {
         REQUIRE(match("str") {
-            equal("kek")      = false,
-            equal(u"16 byte") = false,
-            equal("str"s)     = true,
-            equal(U"str2")    = false
+            eql("kek")      = false,
+            eql(u"16 byte") = false,
+            eql("str"s)     = true,
+            eql(U"str2")    = false
         });
 
         REQUIRE(match("str") {
-            equal("str")      = true,
-            equal(u"16 byte") = false,
-            equal("str4"s)    = false,
-            equal(U"str2")    = false
+            eql("str")      = true,
+            eql(u"16 byte") = false,
+            eql("str4"s)    = false,
+            eql(U"str2")    = false
         });
 
 
         std::string str = "str";
         REQUIRE(match(str) {
-            equal("str5")     = false,
-            equal(u"16 byte") = false,
-            equal("str4"s)    = false,
-            equal("str")      = true
+            eql("str5")     = false,
+            eql(u"16 byte") = false,
+            eql("str4"s)    = false,
+            eql("str")      = true
         });
 
         std::string_view str2 = "hit";
         auto str3 = "hit";
         REQUIRE(match(str2) {
-            equal("str5")     = false,
-            equal(u"16 byte") = false,
-            equal("str4"s)    = false,
-            equal(U"str")     = false,
-            equal(str3)       = true
+            eql("str5")     = false,
+            eql(u"16 byte") = false,
+            eql("str4"s)    = false,
+            eql(U"str")     = false,
+            eql(str3)       = true
         });
     }
 
@@ -89,8 +89,8 @@ int main() {
         std::string test;
 
         match(150) {
-                in_range(0, 100)   = doo { test = "0, 100"; },
-                in_range(100, 200) = doo { test = "hit!"; }
+                inran(0, 100)   = doo { test = "0, 100"; },
+                inran(100, 200) = doo { test = "hit!"; }
         };
 
         REQUIRE(test == "hit!");
@@ -99,15 +99,15 @@ int main() {
     SECTION("Inner match") {
         // Do not use this, inner matchs isn't lazy
         auto answ = match(228) {
-                equal(4) = match(20) {
-                        equal(21) = "false",
-                        equal(52) = "false",
-                        no_opt    = "false"
+                eql(4) = match(20) {
+                        eql(21) = "false",
+                        eql(52) = "false",
+                        noopt   = "false"
                 },
-                equal(228) = match(20) {
-                        equal(22)   = "false",
-                        greater(15) = "true",
-                        no_opt      = "false"
+                eql(228) = match(20) {
+                        eql(22) = "false",
+                        grt(15) = "true",
+                        noopt   = "false"
                 }
         };
 
@@ -119,19 +119,19 @@ int main() {
         static std::string lazy_test;
 
         auto answ2 = match(228) {
-                equal(4) = doo {
+                eql(4) = doo {
                     lazy_test += "first";
                     return match(20) {
-                            equal(21) = "false",
-                            equal(52) = "false",
-                            no_opt    = "false"
+                            eql(21) = "false",
+                            eql(52) = "false",
+                            noopt   = "false"
                     };},
-                equal(228) = doo {
+                eql(228) = doo {
                     lazy_test += "second";
                     return match(20) {
-                            equal(22)   = "false",
-                            greater(15) = "true",
-                            no_opt      = "false"
+                            eql(22) = "false",
+                            grt(15) = "true",
+                            noopt   = "false"
                     };}
         };
         REQUIRE("true"s == answ2);
@@ -140,15 +140,15 @@ int main() {
 
         // Same as previous, use in_match macro
         auto answ3 = match(228) {
-                equal(4) = lazy(match(20) {
-                    equal(21) = "false",
-                    equal(52) = "false",
-                    no_opt    = "false"
+                eql(4) = lazy(match(20) {
+                    eql(21) = "false",
+                    eql(52) = "false",
+                    noopt   = "false"
                 }),
-                equal(228) = in_match(20, {
-                    equal(22)   = "false",
-                    greater(15) = "true",
-                    no_opt      = "false"
+                eql(228) = in_match(20, {
+                    eql(22) = "false",
+                    grt(15) = "true",
+                    noopt   = "false"
                 })
         };
         REQUIRE("true"s == answ3);
@@ -167,8 +167,8 @@ int main() {
         };
 
         auto answ = match("exp") {
-                equal("very exp") = lazy(very_expensive_operation()),
-                equal("exp")      = lazy(expensive_operation())
+                eql("very exp") = lazy(very_expensive_operation()),
+                eql("exp")      = lazy(expensive_operation())
         };
         REQUIRE("EXPENSIVE"s == lazy_check);
         REQUIRE(answ);
@@ -177,8 +177,8 @@ int main() {
 
         // Not lazy
         auto answ2 = match("exp") {
-                equal("very exp") = very_expensive_operation(),
-                equal("exp")      = expensive_operation()
+                eql("very exp") = very_expensive_operation(),
+                eql("exp")      = expensive_operation()
         };
         REQUIRE("VERY EXPENSIVEEXPENSIVE"s == lazy_check);
         REQUIRE(answ);
