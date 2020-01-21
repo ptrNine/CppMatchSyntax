@@ -126,10 +126,6 @@ void lazify_example() {
 
 
 int main() {
-    match(3) {
-        no_opt = 3
-    };
-
     //match_distances();
     //calculator();
     template_match();

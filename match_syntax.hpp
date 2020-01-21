@@ -7,8 +7,8 @@
 #include <any>
 
 #ifdef MATCH_SYNTAX_USE_SCL
-    #include "traits.hpp"
-    #include "string.hpp"
+    #include <scl/traits.hpp>
+    #include <scl/string.hpp>
 #endif
 
 namespace {
