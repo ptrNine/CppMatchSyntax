@@ -134,7 +134,7 @@ template <typename ArgT>
 class MatchCase {
 public:
     MatchCase(MatchCaseType type, std::any&& value, std::any&& value2, const ArgT& arg):
-            _type(type), _val(std::move(value)), _val2(std::move(value2)), _arg(arg) {}
+            _val(std::move(value)), _val2(std::move(value2)), _arg(arg), _type(type) {}
 
     const ArgT& arg() const {
         return _arg;
@@ -218,14 +218,14 @@ private:
 class MatchCondition {
 public:
     template <typename T, typename std::enable_if_t<!is_number_v<T>>...>
-    MatchCondition(MatchCaseType type, const T& value): _type(type), _val(value) {}
+    MatchCondition(MatchCaseType type, const T& value): _val(value), _type(type) {}
 
     template <typename T, typename std::enable_if_t<is_number_v<T>>...>
-    MatchCondition(MatchCaseType type, const T& value): _type(type), _val(double(value)) {}
+    MatchCondition(MatchCaseType type, const T& value): _val(double(value)), _type(type) {}
 
     template <typename T, typename T2, typename std::enable_if_t<is_number_v<T> && is_number_v<T2>>...>
     MatchCondition(MatchCaseType type, const T& value, const T2& value2):
-            _type(type), _val(double(value)), _val2(double(value2)) {}
+            _val(double(value)), _val2(double(value2)), _type(type) {}
 
     static MatchCondition Default() {
         return MatchCondition(MatchCaseType::Default, 0);
