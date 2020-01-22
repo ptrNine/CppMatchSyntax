@@ -8,7 +8,7 @@ void match_distances() {
     std::cin >> year;
 
     auto generation = match(year) {
-        les(1928)          = "unnamed (too old :) )",
+        les(1928)         = "unnamed (too old :) )",
         inran(1928, 1946) = "silent",
         inran(1946, 1965) = "boomers",
         inran(1965, 1981) = "X",
@@ -125,11 +125,33 @@ void lazify_example() {
 }
 
 
+void variant_test() {
+    std::variant<std::string, int, float> val;
+    val = "hello";
+
+    // For unhandled use typ(decltype(val)) or [](auto)
+    auto str = match(val) {
+        typ(std::string) = "string",
+        typ(int)         = "int",
+    };
+
+    std::cout << str << std::endl; // Prints "string"
+
+    val = 2.f;
+
+    // Prints float
+    match(val) {
+        [](float) { std::cout << "float"; },
+        [](int)   { std::cout << "int"; },
+        [](auto)  { std::cout << "unhandled"; }
+    };
+}
+
 int main() {
     //match_distances();
     //calculator();
-    template_match();
-    lazify_example();
-
+    //template_match();
+    //lazify_example();
+    //variant_test();
     return 0;
 }

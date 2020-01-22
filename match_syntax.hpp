@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <any>
+#include <variant>
 
 #ifdef MATCH_SYNTAX_USE_SCL
     #include <scl/traits.hpp>
@@ -83,6 +84,10 @@ namespace {
     template <typename T = void>
     struct Void { using type = void; };
 
+    template <typename... ArgsT>
+    struct arg_types : std::true_type {
+        static constexpr size_t arg_count = sizeof...(ArgsT);
+    };
 
     template <typename T, typename = void>
     struct is_function : std::false_type {};
@@ -92,19 +97,22 @@ namespace {
             : public is_function<decltype(&FunctorT::operator())> {};
 
     template <typename FunctorT, typename ReturnT, typename... ArgsT>
-    struct is_function<ReturnT(FunctorT::*)(ArgsT...)> : std::true_type {};
+    struct is_function<ReturnT(FunctorT::*)(ArgsT...)> : arg_types<ArgsT...> {};
 
     template <typename FunctorT, typename ReturnT, typename... ArgsT>
-    struct is_function<ReturnT(FunctorT::*)(ArgsT...) const> : std::true_type {};
+    struct is_function<ReturnT(FunctorT::*)(ArgsT...) const> : arg_types<ArgsT...> {};
 
     template <typename ReturnT, typename... ArgsT>
-    struct is_function<ReturnT(ArgsT...)> : std::true_type {};
+    struct is_function<ReturnT(ArgsT...)> : arg_types<ArgsT...> {};
 
     template <typename ReturnT, typename... ArgsT>
-    struct is_function<ReturnT(*)(ArgsT...)> : std::true_type {};
+    struct is_function<ReturnT(*)(ArgsT...)> : arg_types<ArgsT...> {};
 
     template <typename T>
     SICB is_function_v = is_function<T>::value;
+
+    template <typename T>
+    SICB args_count_of_v = is_function<T>::arg_count;
 
 
     template <typename T>
@@ -268,8 +276,7 @@ public:
 #undef DEF_CONDITION_TWO_ARG
 
     template <typename ArgT>
-    auto operator=(const ArgT& arg) {
-
+    auto operator=(ArgT&& arg) {
         if constexpr (is_function_v<ArgT>)
             return MatchCase(_type, std::move(_val), std::move(_val2), std::function{arg});
         else if constexpr (is_c_string_v<ArgT>) {
@@ -281,8 +288,13 @@ public:
         else {
             using LambdaT = struct { ArgT operator()() const { return a; } ArgT a; };
 
-            return MatchCase(_type, std::move(_val), std::move(_val2), std::function{LambdaT{arg}});
+            return MatchCase(_type, std::move(_val), std::move(_val2), std::function{LambdaT{std::forward<ArgT>(arg)}});
         }
+    }
+
+    template <typename T>
+    auto operator()(T what) {
+        return "noopt";
     }
 
 private:
@@ -292,7 +304,7 @@ private:
 };
 
 
-template <typename T>
+template <typename T, typename = void>
 class MatchDef {
 public:
     MatchDef(const T& def): _def(def) {}
@@ -319,6 +331,71 @@ private:
 };
 
 template <typename T>
+class MatchDef<T, std::enable_if_t<is_specialization_of<T, std::variant>::value>> {
+public:
+    MatchDef(const T& def): _def(def) {}
+    MatchDef(T&& def): _def(std::move(def)) {}
+
+    template <typename OT>
+    auto operator*(OT&& o) const {
+        return std::visit(o, _def);
+    }
+
+private:
+    T _def;
+};
+
+
+struct TypeMatcherLambda {
+    template <typename T>
+    void operator()(T t) const {
+
+    }
+};
+
+template <typename T>
+class TypeMatcher {
+public:
+    template <typename ArgT>
+    auto operator=(ArgT&& arg) const {
+        if constexpr (is_function_v<ArgT>) {
+            if constexpr (args_count_of_v<ArgT> == 1) {
+                struct LambdaT {
+                    auto operator()(T t) const { return a(t); }
+                    ArgT a;
+                };
+                return arg;
+            }
+            else {
+                struct LambdaT {
+                    auto operator()(T) const { return a(); }
+                    ArgT a;
+                };
+                return LambdaT{std::forward<ArgT>(arg)};
+            }
+        }
+        else if constexpr (is_c_string_v<ArgT>) {
+            using ArgTT = const std::remove_pointer_t<std::decay_t<ArgT>>*;
+
+            struct LambdaT {
+                ArgTT operator()(T) const { return a; }
+                ArgTT a;
+            };
+
+            return LambdaT{arg};
+        }
+        else {
+            struct LambdaT {
+                ArgT operator()(T) const { return std::move(a); }
+                ArgT a;
+            };
+
+            return LambdaT{std::forward<ArgT>(arg)};
+        }
+    }
+};
+
+template <typename T>
 inline auto MatchDefine(T&& value) {
     if constexpr (is_c_string_v<T>)
         return MatchDef<std::decay_t<T>>(value);
@@ -326,11 +403,31 @@ inline auto MatchDefine(T&& value) {
         return MatchDef(std::forward<T>(value));
 }
 
+namespace {
+    template<typename T, typename... ArgsT>
+    struct all_types_equal {
+        static constexpr bool value = (std::is_same_v<T, ArgsT> && ...);
+    };
+}
+
+template <size_t _Sz, bool array, typename... ArgsT>
+struct WhatAShit;
+
+template <size_t _Sz, typename T, typename... ArgsT>
+struct WhatAShit<_Sz, true, T, ArgsT...> : public std::array<T, _Sz> {};
+
+template <size_t _Sz, typename... ArgsT>
+struct WhatAShit<_Sz, false, ArgsT...> : ArgsT... { using ArgsT::operator()...; };
+
+template <typename T, typename... U>
+WhatAShit(T, U...) -> WhatAShit<1 + sizeof...(U), all_types_equal<T, U...>::value, T, U...>;
+
+
 /**
  * Define match expression (same as 'switch')
  * @param VAL - value to be matched
  */
-#define match(VAL) MatchDefine(VAL) * std::array
+#define match(VAL) MatchDefine(VAL) * WhatAShit
 
 /**
  * Default case (same as 'default')
@@ -377,6 +474,11 @@ inline auto MatchDefine(T&& value) {
  * Match if one of arguments is equal
  */
 #define anyof(...) MatchCondition::AnyOf(__VA_ARGS__)
+
+/**
+ * Match type for std::variant
+ */
+#define typ(TYPE) TypeMatcher<TYPE>()
 
 /**
  * Do operation

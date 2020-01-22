@@ -35,17 +35,15 @@ std::cout << val << std::endl; // prints "normal"
 
 and this:
 ```c++
-int score = 6;
-auto val = match(score) {
-    inran(0, 3) = "too low",
-    les(5)      = "low",
-    les(7)      = doo { score = 0; return "normal"; },
-    les(9)      = "high",
-    leql(10)    = "very high",
-    noopt       = "Invalid score"
+std::variant<std::string, int, float> val;
+val = "hello";
+
+auto str = match(val) {
+    typ(std::string) = "string",
+    typ(int)         = "int",
 };
-std::cout << val << std::endl; // prints "normal"
-std::cout << score << std::endl; // prints 0
+
+std::cout << str << std::endl; // Prints "string"
 ```
 and etc...
 
